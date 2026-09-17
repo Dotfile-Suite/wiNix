@@ -11,6 +11,7 @@
 
   outputs =
     {
+      self,
       nixpkgs,
       flake-utils,
       nix-filter,
@@ -36,5 +37,8 @@
           build-launcher = packages.winapps-launcher;
         };
       }
-    );
+    )
+    // {
+      nixosModules.winix = import ./modules/winix.nix { inherit self; };
+    };
 }
