@@ -511,6 +511,20 @@ AUTOPAUSE="off"
 # VALID VALUES: >=20
 AUTOPAUSE_TIME="300"
 
+# [AUTOMATICALLY PAUSE WINDOWS ACTION]
+# NOTES:
+# - This setting is ignored if 'AUTOPAUSE' is set to 'off'.
+# - 'pause' freezes the container (docker/podman) or suspends the VM (libvirt). Resuming
+#   is near-instant, but the container/VM still reserves its RAM while paused.
+# - 'stop' fully stops the container, releasing its RAM and CPU back to the host. Resuming
+#   requires Windows to boot again, so it is noticeably slower than resuming from 'pause'.
+# - 'stop' is not supported with 'libvirt' and falls back to 'pause' behaviour there.
+# DEFAULT VALUE: 'pause'
+# VALID VALUES:
+# - 'pause'
+# - 'stop'
+AUTOPAUSE_ACTION="pause"
+
 # [FREERDP COMMAND]
 # NOTES:
 # - WinApps will attempt to automatically detect the correct command to use for your system.

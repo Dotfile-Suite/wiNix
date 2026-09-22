@@ -116,6 +116,13 @@ let
     WAFLAVOR="${cfg.flavor}"
   '' + optionalString (cfg.rdp.password != null) ''
     RDP_PASS="${cfg.rdp.password}"
+  '' + optionalString cfg.rdp.fullscreen ''
+    RDP_FLAGS_WINDOWS="/f"
+    RDP_FLAGS_NON_WINDOWS="/size:100%"
+  '' + optionalString cfg.autopause.enable ''
+    AUTOPAUSE="on"
+    AUTOPAUSE_TIME="${toString cfg.autopause.time}"
+    AUTOPAUSE_ACTION="${cfg.autopause.action}"
   '';
 
   composeYamlText = ''
@@ -217,6 +224,19 @@ in
           option is future work (see docs/winix/design-decisions.md).
         '';
       };
+
+      fullscreen = mkOption {
+        type = types.bool;
+        default = true;
+        description = ''
+          Launch every winapps RDP session maximized to fill the local
+          screen: `/f` (true fullscreen) for `winapps windows` full-desktop
+          sessions, `/size:100%` for per-app RemoteApp/RAIL sessions (RAIL
+          has no real "fullscreen" concept -- sizing the virtual desktop to
+          the local screen is the closest equivalent, so a RAIL app only
+          fills the screen if it also opens maximized on the Windows side).
+        '';
+      };
     };
 
     vm = {
@@ -228,6 +248,38 @@ in
       ramSize = mkOption { type = types.str; default = "4G"; };
       cpuCores = mkOption { type = types.int; default = 4; };
       diskSize = mkOption { type = types.str; default = "64G"; };
+    };
+
+    autopause = {
+      enable = mkOption {
+        type = types.bool;
+        default = false;
+        description = ''
+          Automatically pause or stop the Windows container after RDP
+          sessions have been idle for `autopause.time` seconds.
+        '';
+      };
+
+      time = mkOption {
+        type = types.int;
+        default = 300;
+        description = ''
+          Seconds of inactivity (no WinApps RDP session open) to tolerate
+          before acting. Must be >= 20; rounds down to the nearest 10.
+        '';
+      };
+
+      action = mkOption {
+        type = types.enum [ "pause" "stop" ];
+        default = "pause";
+        description = ''
+          `pause` freezes the container -- resuming is near-instant, but it
+          still reserves its RAM while paused. `stop` fully stops the
+          container, freeing its RAM and CPU back to the host at the cost of
+          a full Windows boot on next launch. `stop` requires `flavor` to be
+          `docker` or `podman` (falls back to `pause` under `libvirt`).
+        '';
+      };
     };
 
     apps = mkOption {

@@ -52,6 +52,7 @@ REMOVABLE_MEDIA=""
 RDP_SCALE=100
 AUTOPAUSE="off"
 AUTOPAUSE_TIME="300"
+AUTOPAUSE_ACTION="pause"
 DEBUG="true"
 BOOT_TIMEOUT=120
 PORT_TIMEOUT=5
@@ -946,16 +947,26 @@ function waCheckIdle() {
             done
         fi
 
-        # Hibernate/Pause Windows.
+        # Hibernate/Pause/Stop Windows.
         if [ "$SUSPEND_WINDOWS" -eq 1 ]; then
-            dprint "IDLE FOR ${AUTOPAUSE_TIME} SECONDS. SUSPENDING WINDOWS."
-            notify-send --expire-time=8000 --icon="info" --app-name="WinApps" --urgency="low" "WinApps" "Pausing Windows due to inactivity."
-            if [ "$WAFLAVOR" = "docker" ]; then
-                docker compose --file "$COMPOSE_PATH" pause &>/dev/null
-            elif [ "$WAFLAVOR" = "podman" ]; then
-                podman-compose --file "$COMPOSE_PATH" pause &>/dev/null
-            elif [ "$WAFLAVOR" = "libvirt" ]; then
-                virsh suspend "$VM_NAME" &>/dev/null
+            if [ "$AUTOPAUSE_ACTION" = "stop" ] && [ "$WAFLAVOR" != "libvirt" ]; then
+                dprint "IDLE FOR ${AUTOPAUSE_TIME} SECONDS. STOPPING WINDOWS."
+                notify-send --expire-time=8000 --icon="info" --app-name="WinApps" --urgency="low" "WinApps" "Stopping Windows due to inactivity."
+                if [ "$WAFLAVOR" = "docker" ]; then
+                    docker compose --file "$COMPOSE_PATH" stop &>/dev/null
+                elif [ "$WAFLAVOR" = "podman" ]; then
+                    podman-compose --file "$COMPOSE_PATH" stop &>/dev/null
+                fi
+            else
+                dprint "IDLE FOR ${AUTOPAUSE_TIME} SECONDS. SUSPENDING WINDOWS."
+                notify-send --expire-time=8000 --icon="info" --app-name="WinApps" --urgency="low" "WinApps" "Pausing Windows due to inactivity."
+                if [ "$WAFLAVOR" = "docker" ]; then
+                    docker compose --file "$COMPOSE_PATH" pause &>/dev/null
+                elif [ "$WAFLAVOR" = "podman" ]; then
+                    podman-compose --file "$COMPOSE_PATH" pause &>/dev/null
+                elif [ "$WAFLAVOR" = "libvirt" ]; then
+                    virsh suspend "$VM_NAME" &>/dev/null
+                fi
             fi
         fi
     fi
